@@ -102,6 +102,7 @@ WSGI_APPLICATION = 'chat_project.wsgi.application'
 # ============================================
 DATABASES = {
     'default': dj_database_url.config(
+        'DATABASE_URL',
         default='sqlite:///db.sqlite3',
         conn_max_age=600,
         ssl_require=not DEBUG
