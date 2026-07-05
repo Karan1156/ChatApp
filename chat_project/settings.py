@@ -257,7 +257,7 @@ REST_AUTH = {
 }
 
 # Frontend URL
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+FRONTEND_URL = config('FRONTEND_URL', default='https://chat-app-frontend-three-wine.vercel.app')
 
 # ============================================
 # SECURITY SETTINGS
