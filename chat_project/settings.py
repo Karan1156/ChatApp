@@ -138,13 +138,13 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
     CORS_ALLOW_CREDENTIALS = True
     # These are not used when CORS_ALLOW_ALL_ORIGINS is True
-    CORS_ALLOWED_ORIGINS = []
+    CORS_ALLOWED_ORIGINS = ['chat-app-frontend-three-wine.vercel.app']
     CORS_ALLOWED_ORIGIN_REGEXES = []
 else:
     # Production - specify exact origins
     CORS_ALLOW_ALL_ORIGINS = False
     CORS_ALLOW_CREDENTIALS = True
-    CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+    CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='chat-app-frontend-three-wine.vercel.app').split(',')
     CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS if origin.strip()]
     CORS_ALLOWED_ORIGIN_REGEXES = []
 
@@ -177,9 +177,10 @@ if DEBUG:
         'http://127.0.0.1:3000',
         'http://localhost:8000',
         'http://127.0.0.1:8000',
+        'chat-app-frontend-three-wine.vercel.app'
     ]
 else:
-    CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='').split(',')
+    CSRF_TRUSTED_ORIGINS = config('CSRF_TRUSTED_ORIGINS', default='chat-app-frontend-three-wine.vercel.app').split(',')
     CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in CSRF_TRUSTED_ORIGINS if origin.strip()]
 
 # REST Framework
