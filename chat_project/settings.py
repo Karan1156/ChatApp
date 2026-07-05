@@ -12,10 +12,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================
 # ENVIRONMENT SETTINGS
 # ============================================
-SECRET_KEY = "jkfgdskfgsdkjfdsfsdjkbfjka"
-DEBUG = config('DEBUG', default=False, cast=bool)
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-temporary-key-for-development-only')
+DEBUG = config('DEBUG', default=False, cast=bool)  # Default to False for production
 
-# Allow all hosts in production (Render handles this)
 ALLOWED_HOSTS = ['*']
 
 # ============================================
@@ -48,8 +47,16 @@ INSTALLED_APPS = [
     'chat',
 ]
 
+# Add debug toolbar only in development
+if DEBUG:
+    try:
+        import debug_toolbar
+        INSTALLED_APPS += ['debug_toolbar']
+    except ImportError:
+        pass
+
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # MUST be first
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -60,6 +67,15 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
 ]
+
+# Add debug toolbar middleware only in development
+if DEBUG:
+    try:
+        import debug_toolbar
+        MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+        INTERNAL_IPS = ['127.0.0.1', 'localhost']
+    except ImportError:
+        pass
 
 ROOT_URLCONF = 'chat_project.urls'
 
@@ -88,7 +104,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default='sqlite:///db.sqlite3',
         conn_max_age=600,
-        ssl_require=not DEBUG  # Require SSL in production
+        ssl_require=not DEBUG
     )
 }
 
@@ -143,29 +159,21 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # ============================================
-# CORS SETTINGS - PRODUCTION READY
+# CORS SETTINGS
 # ============================================
-# Allow credentials (cookies, authorization headers)
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 
-# In production, don't allow all origins
-CORS_ALLOW_ALL_ORIGINS = False
-
-# Specific allowed origins
 CORS_ALLOWED_ORIGINS = [
     "https://chat-app-frontend-three-wine.vercel.app",
     "https://chatapp-ovm8.onrender.com",
-    "https://*.onrender.com",
-    "https://*.vercel.app",
 ]
 
-# Regex for allowed origins (supports subdomains)
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.vercel\.app$",
     r"^https://.*\.onrender\.com$",
 ]
 
-# Allowed HTTP methods
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -175,7 +183,6 @@ CORS_ALLOW_METHODS = [
     "PUT",
 ]
 
-# Allowed headers in requests
 CORS_ALLOW_HEADERS = [
     "accept",
     "accept-encoding",
@@ -188,32 +195,26 @@ CORS_ALLOW_HEADERS = [
     "x-requested-with",
 ]
 
-# Headers exposed to the frontend
-CORS_EXPOSE_HEADERS = [
-    "content-type",
-    "access-control-allow-origin",
-    "access-control-allow-credentials",
-]
-
-# Preflight max age (24 hours)
-CORS_PREFLIGHT_MAX_AGE = 86400
-
 # ============================================
-# CSRF SETTINGS - PRODUCTION READY
+# CSRF SETTINGS
 # ============================================
 CSRF_TRUSTED_ORIGINS = [
     "https://chat-app-frontend-three-wine.vercel.app",
     "https://chatapp-ovm8.onrender.com",
-    "https://*.onrender.com",
-    "https://*.vercel.app",
 ]
 
-CSRF_COOKIE_SECURE = True  # Only send over HTTPS
-CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript to read CSRF token
-CSRF_COOKIE_SAMESITE = 'Lax'
-CSRF_USE_SESSIONS = False
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS += [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+    ]
 
-SESSION_COOKIE_SECURE = True  # Only send over HTTPS
+CSRF_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_HTTPONLY = False
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = 'Lax'
 
 # ============================================
@@ -233,19 +234,18 @@ REST_FRAMEWORK = {
 }
 
 # ============================================
-# EMAIL SETTINGS - PRODUCTION READY
+# EMAIL SETTINGS
 # ============================================
-# Use Gmail with App Password
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
 EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')  # App Password
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 
 # ============================================
-# DJANGO-ALLAUTH SETTINGS - PRODUCTION READY
+# DJANGO-ALLAUTH SETTINGS
 # ============================================
 SITE_ID = 1
 
@@ -254,19 +254,17 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Account settings
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Require email verification
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
 ACCOUNT_EMAIL_SUBJECT_PREFIX = ''
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https'  # Always HTTPS in production
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_MIN_LENGTH = 4
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
-# Redirects
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
@@ -296,35 +294,29 @@ REST_AUTH = {
     'OLD_PASSWORD_FIELD_ENABLED': True,
 }
 
-# Frontend URL for email confirmation links
+# Frontend URL
 FRONTEND_URL = config('FRONTEND_URL', default='https://chat-app-frontend-three-wine.vercel.app')
 
-# Customize email confirmation URL
-ACCOUNT_EMAIL_CONFIRMATION_URL = f"{FRONTEND_URL}/auth/confirm-email/"
+# ============================================
+# SECURITY SETTINGS
+# ============================================
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+else:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
 
 # ============================================
-# SECURITY SETTINGS - PRODUCTION READY
-# ============================================
-# HTTPS Settings
-SECURE_SSL_REDIRECT = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# HSTS Settings
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
-
-# Other security settings
-SECURE_BROWSER_XSS_FILTER = True
-SECURE_CONTENT_TYPE_NOSNIFF = True
-X_FRAME_OPTIONS = 'DENY'
-
-# Cookie security (already set above)
-# CSRF_COOKIE_SECURE = True
-# SESSION_COOKIE_SECURE = True
-
-# ============================================
-# LOGGING - PRODUCTION READY
+# LOGGING
 # ============================================
 LOGGING = {
     'version': 1,
@@ -336,45 +328,18 @@ LOGGING = {
     },
     'root': {
         'handlers': ['console'],
-        'level': 'WARNING',
+        'level': 'INFO',
     },
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            'level': 'INFO',
             'propagate': False,
         },
         'accounts': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'DEBUG',
             'propagate': False,
         },
     },
 }
-
-# ============================================
-# DJANGO-DEBUG-TOOLBAR (Only in development)
-# ============================================
-if DEBUG:
-    INSTALLED_APPS += ['debug_toolbar']
-    MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
-    INTERNAL_IPS = ['127.0.0.1', 'localhost']
-    
-    # Override CORS for development
-    CORS_ALLOW_ALL_ORIGINS = True
-    CORS_ALLOW_CREDENTIALS = True
-    
-    # Override CSRF for development
-    CSRF_TRUSTED_ORIGINS = [
-        'http://localhost:3000',
-        'http://127.0.0.1:3000',
-        'http://localhost:8000',
-        'http://127.0.0.1:8000',
-        'https://chat-app-frontend-three-wine.vercel.app',
-        'https://chatapp-ovm8.onrender.com',
-    ]
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
-    
-    # Use console email backend for development
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
