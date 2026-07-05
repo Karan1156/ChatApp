@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ============================================
 # ENVIRONMENT SETTINGS
 # ============================================
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = "jkfgdskfgsdkjfdsfsdjkbfjka"
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Allow all hosts in production (Render handles this)
