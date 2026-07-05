@@ -43,12 +43,6 @@ static/
 *.njsproj
 *.sln
 *.sw?
-
-# Migrations
-**/migrations/*.py
-!**/migrations/__init__.py
-**/migrations/*.pyc
-
 # Testing
 .coverage
 htmlcov/
