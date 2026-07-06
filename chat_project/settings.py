@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'cloudinary_storage',
     'cloudinary',
-    'sendgrid',  # Add SendGrid for production email
+    'anymail',  # Add Anymail here
     
     # Local apps
     'accounts',
@@ -280,29 +280,19 @@ REST_FRAMEWORK = {
 }
 
 # ============================================
-# EMAIL SETTINGS - SendGrid SMTP for Production
+# EMAIL SETTINGS - Using Anymail with SendGrid
 # ============================================
 if RENDER:
-    # Production on Render - Use SendGrid SMTP relay
-    # No extra packages needed - uses Django's built-in SMTP backend
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.sendgrid.net'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'apikey'  # This must be exactly 'apikey'
-    EMAIL_HOST_PASSWORD = config('SENDGRID_API_KEY')
+    # Production - Use Anymail with SendGrid
+    EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
+    ANYMAIL = {
+        "SENDGRID_API_KEY": config('SENDGRID_API_KEY'),
+    }
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.com')
-    EMAIL_TIMEOUT = 10
 else:
-    # Local development - Use Gmail SMTP
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-    EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-    EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@example.com')
-    EMAIL_TIMEOUT = 10
+    # Local development - Use console backend (no real emails)
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'noreply@example.com'
 
 # ============================================
 # DJANGO-ALLAUTH SETTINGS
@@ -410,8 +400,8 @@ print("=" * 50)
 print(f"🚀 Environment: {'PRODUCTION' if RENDER else 'DEVELOPMENT'}")
 print(f"📡 Database: {'PostgreSQL' if 'postgres' in str(DATABASES) else 'SQLite'}")
 if RENDER:
-    print(f"📧 Email: SendGrid")
+    print(f"📧 Email: Anymail + SendGrid")
 else:
-    print(f"📧 Email: SMTP ({EMAIL_HOST})")
+    print(f"📧 Email: Console")
 print(f"🔧 Debug: {DEBUG}")
 print("=" * 50)
