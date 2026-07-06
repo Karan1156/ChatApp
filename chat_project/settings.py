@@ -47,16 +47,9 @@ INSTALLED_APPS = [
     'chat',
 ]
 
-# Add debug toolbar only in development
-if DEBUG:
-    try:
-        import debug_toolbar
-        INSTALLED_APPS += ['debug_toolbar']
-    except ImportError:
-        pass
-
+# Base MIDDLEWARE
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # MUST be first
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -68,14 +61,30 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',
 ]
 
-# Add debug toolbar middleware only in development
-if DEBUG:
+# ============================================
+# DEBUG TOOLBAR - ONLY IN DEVELOPMENT
+# ============================================
+# Check if running on Render
+RENDER = os.environ.get('RENDER', False)
+
+# Only enable debug toolbar locally, never on Render
+if DEBUG and not RENDER:
     try:
         import debug_toolbar
+        INSTALLED_APPS += ['debug_toolbar']
         MIDDLEWARE.insert(0, 'debug_toolbar.middleware.DebugToolbarMiddleware')
         INTERNAL_IPS = ['127.0.0.1', 'localhost']
     except ImportError:
         pass
+
+# Remove debug toolbar if it somehow got added in production
+if not DEBUG or RENDER:
+    if 'debug_toolbar' in INSTALLED_APPS:
+        INSTALLED_APPS.remove('debug_toolbar')
+    
+    debug_middleware = 'debug_toolbar.middleware.DebugToolbarMiddleware'
+    if debug_middleware in MIDDLEWARE:
+        MIDDLEWARE.remove(debug_middleware)
 
 ROOT_URLCONF = 'chat_project.urls'
 
@@ -160,17 +169,15 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # ============================================
-# CORS SETTINGS - FIXED
+# CORS SETTINGS
 # ============================================
 CORS_ALLOW_CREDENTIALS = True
 
-# Allow all origins in development, specific in production
-if DEBUG:
+if DEBUG and not RENDER:
     CORS_ALLOW_ALL_ORIGINS = True
 else:
     CORS_ALLOW_ALL_ORIGINS = False
 
-# Always include localhost for development
 CORS_ALLOWED_ORIGINS = [
     "https://chat-app-frontend-three-wine.vercel.app",
     "https://chatapp-ovm8.onrender.com",
@@ -180,7 +187,6 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:8000",
 ]
 
-# Allow any localhost port via regex
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.vercel\.app$",
     r"^https://.*\.onrender\.com$",
@@ -220,7 +226,7 @@ CORS_EXPOSE_HEADERS = [
 CORS_PREFLIGHT_MAX_AGE = 86400
 
 # ============================================
-# CSRF SETTINGS - FIXED
+# CSRF SETTINGS
 # ============================================
 CSRF_TRUSTED_ORIGINS = [
     "https://chat-app-frontend-three-wine.vercel.app",
