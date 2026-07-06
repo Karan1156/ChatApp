@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ENVIRONMENT SETTINGS
 # ============================================
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-temporary-key-for-development-only')
-DEBUG = config('DEBUG', default=False, cast=bool)  # Default to False for production
+DEBUG = config('DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = ['*']
 
@@ -56,7 +56,7 @@ if DEBUG:
         pass
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # MUST be first
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -160,19 +160,32 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
 # ============================================
-# CORS SETTINGS
+# CORS SETTINGS - FIXED
 # ============================================
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = DEBUG
 
+# Allow all origins in development, specific in production
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+
+# Always include localhost for development
 CORS_ALLOWED_ORIGINS = [
     "https://chat-app-frontend-three-wine.vercel.app",
     "https://chatapp-ovm8.onrender.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
 
+# Allow any localhost port via regex
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.vercel\.app$",
     r"^https://.*\.onrender\.com$",
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
 ]
 
 CORS_ALLOW_METHODS = [
@@ -194,27 +207,35 @@ CORS_ALLOW_HEADERS = [
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
+    "access-control-allow-origin",
+    "access-control-allow-credentials",
 ]
 
+CORS_EXPOSE_HEADERS = [
+    "content-type",
+    "access-control-allow-origin",
+    "access-control-allow-credentials",
+]
+
+CORS_PREFLIGHT_MAX_AGE = 86400
+
 # ============================================
-# CSRF SETTINGS
+# CSRF SETTINGS - FIXED
 # ============================================
 CSRF_TRUSTED_ORIGINS = [
     "https://chat-app-frontend-three-wine.vercel.app",
     "https://chatapp-ovm8.onrender.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
 ]
-
-if DEBUG:
-    CSRF_TRUSTED_ORIGINS += [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ]
 
 CSRF_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_USE_SESSIONS = False
+
 SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_SAMESITE = 'Lax'
 
@@ -339,7 +360,7 @@ LOGGING = {
         },
         'accounts': {
             'handlers': ['console'],
-            'level': 'DEBUG',
+            'level': 'DEBUG' if DEBUG else 'INFO',
             'propagate': False,
         },
     },
