@@ -4,7 +4,7 @@ from pathlib import Path
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
-import dj_database_url
+# import dj_database_url
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -109,12 +109,20 @@ WSGI_APPLICATION = 'chat_project.wsgi.application'
 # ============================================
 # DATABASE
 # ============================================
+# ============================================
+# DATABASE - Production PostgreSQL Only
+# ============================================
+import dj_database_url
+
+# Get database URL from environment - CHANGE THIS LINE
+DATABASE_URL = config('DATABASE_URL')  # Changed from DATABASE_URL
+
+# Configure PostgreSQL for both local and production
 DATABASES = {
     'default': dj_database_url.config(
-        'DATABASE_URL',
-        default='sqlite:///db.sqlite3',
+        default=DATABASE_URL,
         conn_max_age=600,
-        ssl_require=not DEBUG
+        ssl_require=True  # Always require SSL for security
     )
 }
 
